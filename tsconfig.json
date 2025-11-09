@@ -1,16 +1,25 @@
 {
-  "extends": ["@tsconfig/node22"],
-  "compilerOptions": {
-    "sourceMap": true,
-    "noUnusedLocals": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "resolveJsonModule": true,
-    "outDir": "dist",
-    "skipLibCheck": true
-  },
-  "exclude": [
-    "node_modules",
-    "public/**/*"
-  ]
+    "extends": ["@tsconfig/node22"],
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ES2020",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "sourceMap": true,
+        "noUnusedLocals": false,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "resolveJsonModule": true,
+        "outDir": "dist",
+        "rootDir": "src",
+        "skipLibCheck": true,
+        "removeComments": false,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "baseUrl": "."
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
 }
