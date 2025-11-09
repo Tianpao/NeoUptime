@@ -5,6 +5,7 @@ const app = express();
 
 app.use(express.json());
 app.set("X-Powered-By", "OpenEasyTier")
+app.enable('trust proxy') 
 
 app.use(nodes); // Nodes
 

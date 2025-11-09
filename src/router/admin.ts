@@ -8,3 +8,7 @@ router.use(AdminMiddleware.Verify)
 router.get("/api/login",(req,res)=>{
     Jwter.sign({})
 })
+
+router.get("/api/nodes",(req,res)=>{
+    
+})
