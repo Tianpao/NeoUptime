@@ -248,53 +248,48 @@ export class Node {
     static async getStatus(id: number): Promise<NodeStatusInfo | null> {
         const db = getDb();
 
-        // 检查节点是否存在
-        const nodeExists = await db.get<{ id: number }>("SELECT id FROM nodes WHERE id = ?", [id]);
-        if (!nodeExists) return null;
-
-        // 获取最新的状态记录
-        const latestStatus = await db.get<any>(
-            `SELECT status, response_time, checked_at 
-       FROM node_status_history 
-       WHERE node_id = ? 
-       ORDER BY checked_at DESC 
-       LIMIT 1`,
+        // 直接从 nodes 表中获取缓存的最新状态
+        const nodeStatus = await db.get<{
+            id: number;
+            status: NodeStatus;
+            response_time: number;
+            last_status_update: string;
+        }>(
+            `SELECT id, status, response_time, last_status_update
+         FROM nodes
+         WHERE id = ?`,
             [id]
         );
 
-        if (latestStatus) {
-            return {
-                id,
-                status: latestStatus.status as NodeStatus,
-                response_time: latestStatus.response_time,
-                last_checked: latestStatus.checked_at,
-            };
+        if (!nodeStatus) {
+            return null;
         }
 
-        // 如果没有状态记录，默认返回离线
         return {
-            id,
-            status: "Offline",
-            last_checked: new Date().toISOString(),
+            id: nodeStatus.id,
+            status: nodeStatus.status || "Offline", // 如果状态为 null，则默认为 Offline
+            response_time: nodeStatus.response_time,
+            last_checked: nodeStatus.last_status_update,
         };
     }
 
     // 记录节点状态
-    static async updateStatus(id: number, status: NodeStatus, metadata?: string): Promise<boolean> {
+    static async updateStatus(id: number, status: NodeStatus, metadata?: string, responseTime?: number): Promise<boolean> {
         const db = getDb();
         const now = new Date().toISOString();
 
         try {
-            const result = await db.run("UPDATE nodes SET status = ?, last_status_update = ? WHERE id = ?", [
+            const result = await db.run("UPDATE nodes SET status = ?, response_time = ?, last_status_update = ? WHERE id = ?", [
                 status,
+                responseTime || null,
                 now,
                 id,
             ]);
 
             // 记录状态变更历史
             await db.run(
-                "INSERT INTO node_status_history (node_id, status, metadata, created_at) VALUES (?, ?, ?, ?)",
-                [id, status, metadata || null, now]
+                "INSERT INTO node_status_history (node_id, status, metadata, checked_at, response_time) VALUES (?, ?, ?, ?, ?)",
+                [id, status, metadata || null, now, responseTime || null]
             );
 
             return result.changes !== undefined && result.changes > 0;
@@ -316,49 +311,39 @@ export class Node {
         const count = Math.min(params.count || 5, 20);
 
         // 构建基础查询（只选择在线节点）
-        const conditions: string[] = [];
+        const conditions: string[] = ["status = 'Online'"];
         const values: any[] = [];
 
         if (params.protocol) {
-            conditions.push("n.protocol = ?");
+            conditions.push("protocol = ?");
             values.push(params.protocol);
         }
 
-        // 查询在线节点的总数
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
         // 获取所有在线节点及其最新状态
-        const query = `
-      WITH node_latest_status AS (
-        SELECT 
-          n.id,
-          n.name,
-          n.host,
-          n.port,
-          n.protocol,
-          n.network_name,
-          COALESCE(ns.status, 'Offline') as status,
-          ns.response_time,
-          ROW_NUMBER() OVER (PARTITION BY n.id ORDER BY ns.checked_at DESC) as rn
-        FROM nodes n
-        LEFT JOIN node_status_history ns ON n.id = ns.node_id
-        ${whereClause}
-      )
-      SELECT 
-        id, name, host, port, protocol, network_name, status, response_time
-      FROM node_latest_status
-      WHERE rn = 1 AND status = 'Online'
-      ORDER BY 
-        -- 负载均衡算法：先按响应时间排序，再随机排序
-        response_time ASC NULLS LAST,
-        RANDOM()
-    `;
+        // 查询总数
+        const totalResult = await db.get<{ count: number }>(
+            `SELECT COUNT(*) as count FROM nodes ${whereClause}`,
+            values
+        );
+        const totalAvailable = totalResult?.count || 0;
 
-        const allOnlineNodes = await db.all<PeerNodeInfo[]>(query, [...values]);
-        const totalAvailable = allOnlineNodes.length;
+        // 查询节点列表并进行负载均衡
+        const query = `
+        SELECT
+            id, name, host, port, protocol, network_name, status, response_time
+        FROM nodes
+        ${whereClause}
+        ORDER BY
+            (response_time IS NULL) ASC,
+            response_time ASC,
+            RANDOM()
+        LIMIT ?
+        `;
 
         // 取前N个节点
-        const peers = allOnlineNodes.slice(0, count);
+        const peers = await db.all<PeerNodeInfo[]>(query, [...values, count]);
         const nextBatchAvailable = totalAvailable > count;
 
         return {

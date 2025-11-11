@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS "nodes" (
     "qq_number" TEXT,
     "mail" TEXT,
     "created_at" TEXT NOT NULL,
+    "status" TEXT DEFAULT 'Offline',
+    "last_status_update" TEXT,
+    "response_time" INTEGER,
     "updated_at" TEXT NOT NULL,
     PRIMARY KEY("id" AUTOINCREMENT)
 );
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS "node_status_history" (
     "status" TEXT NOT NULL,
     "checked_at" TEXT NOT NULL,
     "response_time" INTEGER,
+    "metadata" TEXT,
     PRIMARY KEY("id" AUTOINCREMENT),
     FOREIGN KEY("node_id") REFERENCES "nodes"("id") ON DELETE CASCADE
 );
@@ -53,10 +57,11 @@ CREATE TABLE IF NOT EXISTS "node_status_history" (
 -- 创建api_keys表
 CREATE TABLE IF NOT EXISTS "api_keys" (
     "id" INTEGER NOT NULL,
-    "key_hash" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
     "description" TEXT,
     "created_by" INTEGER,
     "created_at" TEXT NOT NULL,
+    "updated_at" TEXT NOT NULL,
     "expires_at" TEXT,
     "is_active" INTEGER NOT NULL DEFAULT 1,
     "last_used_at" TEXT,
@@ -72,6 +77,7 @@ CREATE TABLE IF NOT EXISTS "api_access_logs" (
     "ip_address" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
     "method" TEXT NOT NULL,
+    "user_agent" TEXT NOT NULL,
     "status_code" INTEGER NOT NULL,
     "response_time" INTEGER,
     "created_at" TEXT NOT NULL,
@@ -101,6 +107,9 @@ export const initDatabase = async () => {
             filename: config.database.path,
             driver: sqlite3.Database,
         });
+
+        // 启用外键约束
+        await db.exec("PRAGMA foreign_keys = ON;");
 
         // 执行初始化SQL
         await db.exec(INITIALIZE_SQL);
