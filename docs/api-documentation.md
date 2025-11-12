@@ -1,8 +1,8 @@
-# EasyTierMC Neo 后端 API 文档
+# EasyTier NeoUptime 后端 API 文档
 
 ## 项目简介
 
-EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，提供节点管理、管理员认证、API Key 管理等功能。
+EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供节点管理、管理员认证、API Key 管理等功能。
 
 ## 认证方式
 
@@ -515,6 +515,8 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
         "max_connections": 100,
         "qq_number": "123456789",
         "mail": "node@example.com",
+        "region": "China",
+        "isp": "China Telecom",
         "status": "offline",
         "created_at": "2024-01-01T00:00:00Z"
     }
@@ -534,6 +536,7 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
 -   `search`：搜索关键词
 -   `status`：节点状态
 -   `protocol`：协议类型
+-   `region`：区域过滤
 
 **成功响应**：
 
@@ -549,6 +552,8 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
                 "host": "192.168.1.100",
                 "port": 25565,
                 "protocol": "http",
+                "region": "China",
+                "isp": "China Telecom",
                 "status": "online",
                 "created_at": "2024-01-01T00:00:00Z"
             }
@@ -590,6 +595,8 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
         "max_connections": 100,
         "qq_number": "123456789",
         "mail": "node@example.com",
+        "region": "China",
+        "isp": "China Telecom",
         "status": "online",
         "created_at": "2024-01-01T00:00:00Z"
     }
@@ -616,7 +623,7 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
 }
 ```
 
-**参数说明**：可更新任意非必填字段，必填字段更新时需要重新验证格式
+**参数说明**：可更新任意非必填字段，必填字段更新时需要重新验证格式。支持更新region（可包含详细地理位置信息）和isp字段。
 
 **成功响应**：
 
@@ -637,6 +644,8 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
         "max_connections": 200,
         "qq_number": "123456789",
         "mail": "node@example.com",
+        "region": "China",
+        "isp": "China Telecom",
         "status": "online",
         "created_at": "2024-01-01T00:00:00Z"
     }
@@ -729,6 +738,10 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
 
 **认证方式**：可选 API Key（通过请求头 `Authorization: Bearer {apiKey}`）
 
+**查询参数**：
+
+-   `region`：区域过滤，可选参数
+
 **成功响应**：
 
 ```json
@@ -744,7 +757,9 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
             "protocol": "http",
             "status": "online",
             "response_time": 50,
-            "allow_relay": true
+            "allow_relay": true,
+            "region": "China",
+            "isp": "China Telecom"
         },
         {
             "id": 2,
@@ -754,7 +769,9 @@ EasyTierMC Neo 是一个 Minecraft 服务器节点管理系统的后端服务，
             "protocol": "https",
             "status": "online",
             "response_time": 75,
-            "allow_relay": true
+            "allow_relay": true,
+            "region": "China",
+            "isp": "China Unicom"
         }
     ]
 }

@@ -7,6 +7,7 @@ import { initDatabase } from "./config/database.js";
 import { config, validateConfig } from "./config/config.js";
 import { errorResponse } from "./utils/helpers.js";
 import { Admin } from "./models/Admin.js";
+import { geoIPService } from "./utils/GeoIPService.js";
 
 // 验证配置
 validateConfig();
@@ -82,7 +83,8 @@ async function startServer() {
                 logger.info("创建了默认管理员账户", { username: "admin", password: "admin123" });
             }
         }
-
+        // 初始化 GeoIP 服务
+        await geoIPService.initialize();
         // 启动服务器
         const PORT = config.server.port || 3000;
         app.listen(PORT, () => {

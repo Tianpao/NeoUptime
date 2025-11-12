@@ -11,14 +11,30 @@ import {
     validatePort,
     asyncHandler,
 } from "../utils/helpers.js";
+import { geoIPService } from "../utils/GeoIPService.js";
 
 // NodeController 类
 export class NodeController {
     // 创建节点
     static create = asyncHandler(async (req: Request, res: Response): Promise<Response | void> => {
-        // 验证必需字段
-        const validationError = validateRequestBody(req, ["name", "host", "port", "protocol", "max_connections"]);
+        // 检查请求体是否存在
+        if (!req.body) {
+            logger.error("Request body is empty");
+            return errorResponse(res, 400, "请求体不能为空");
+        }
+        
+        // 单独检查name字段并立即返回错误
+        if (req.body.name === undefined || req.body.name === null || req.body.name.trim() === "") {
+            logger.error("Missing required 'name' field in request body");
+            return errorResponse(res, 400, "节点名称是必填字段");
+        }
+        
+        logger.debug("Name field exists and has value:", req.body.name);
+
+        // 验证请求体中的其他字段
+        const validationError = validateRequestBody(req, ["host", "port", "protocol", "max_connections"]);
         if (validationError) {
+            logger.warn("Validation error:", validationError);
             return errorResponse(res, 400, validationError);
         }
 
@@ -49,6 +65,49 @@ export class NodeController {
             return errorResponse(res, 400, "最大连接数必须大于 0");
         }
 
+        // 获取节点地理位置信息
+        let geoData = null;
+        
+        // 检查geoIPService是否初始化成功
+        if (!geoIPService.isInitialized()) {
+            logger.warn("GeoIP service not initialized, skipping location lookup");
+        } else {
+            try {
+                //从GEOIP数据库获取地理位置信息和ASN信息
+                geoData = await geoIPService.lookup(host);
+                if (!geoData || (!geoData.location && !geoData.network)) {
+                    logger.debug(`No geo data found for ${host}`);
+                }
+            } catch (error) {
+                logger.error(`Error looking up geo data for ${host}:`, error);
+            }
+        }
+        
+        // 获取地理位置信息
+        let region = "";
+        let ISP = "";
+        
+        try {
+            if (geoData && geoData.location) {
+                // 获取region
+                const location = geoData.location;
+                if (location.country && location.country.names) {
+                    region = location.country.names.en || "";
+                    // TODO: 位置具体到城市 (当前数据库无对应数据)
+                }
+            }
+            
+            // 获取ISP
+            if (geoData && geoData.network) {
+                ISP = geoData.network.autonomous_system_organization || ""
+            }
+        } catch (error) {
+            logger.error("Error extracting geo location data:", error);
+            // 发生错误时使用默认空字符串
+            region = "";
+            ISP = "";
+        }
+
         // 尝试创建节点
         const nodeData: NodeData = {
             name,
@@ -60,12 +119,15 @@ export class NodeController {
             network_name,
             network_secret,
             max_connections,
+            region,
+            ISP,
             qq_number,
             mail,
         };
-
         const newNode = await Node.create(nodeData);
+
         if (!newNode) {
+            logger.error("Node.create returned null");
             return errorResponse(res, 500, "创建节点失败");
         }
 

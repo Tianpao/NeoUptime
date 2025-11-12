@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS "nodes" (
     "network_name" TEXT,
     "network_secret" TEXT,
     "max_connections" INTEGER NOT NULL,
+    "region" TEXT,
+    "ISP" TEXT,
     "qq_number" TEXT,
     "mail" TEXT,
     "created_at" TEXT NOT NULL,

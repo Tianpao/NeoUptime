@@ -18,6 +18,8 @@ export interface NodeData {
     network_name?: string;
     network_secret?: string;
     max_connections: number;
+    region?: string;
+    ISP?: string;
     qq_number?: string;
     mail?: string;
     created_at?: string;
@@ -48,14 +50,19 @@ export interface PeerNodeInfo {
 export class Node {
     // 创建新节点
     static async create(nodeData: NodeData): Promise<NodeData> {
+        // 检查name属性是否存在（额外安全检查）
+        if (nodeData.name === undefined) {
+            throw new Error("Missing required field: name");
+        }
+        
         const db = getDb();
         const now = new Date().toISOString();
 
         const result = await db.run(
             `INSERT INTO nodes 
        (name, description, host, port, protocol, allow_relay, network_name, 
-        network_secret, max_connections, qq_number, mail, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        network_secret, max_connections, region, ISP, qq_number, mail, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 nodeData.name,
                 nodeData.description || null,
@@ -66,6 +73,8 @@ export class Node {
                 nodeData.network_name || null,
                 nodeData.network_secret || null,
                 nodeData.max_connections,
+                nodeData.region || null,
+                nodeData.ISP || null,
                 nodeData.qq_number || null,
                 nodeData.mail || null,
                 now,
@@ -156,6 +165,14 @@ export class Node {
             if (updates.mail !== undefined) {
                 updateFields.push("mail = ?");
                 updateValues.push(updates.mail);
+            }
+            if (updates.region !== undefined) {
+                updateFields.push("region = ?");
+                updateValues.push(updates.region || null);
+            }
+            if (updates.ISP !== undefined) {
+                updateFields.push("ISP = ?");
+                updateValues.push(updates.ISP || null);
             }
 
             // 添加更新时间
@@ -277,6 +294,7 @@ export class Node {
     static async updateStatus(id: number, status: NodeStatus, metadata?: string, responseTime?: number): Promise<boolean> {
         const db = getDb();
         const now = new Date().toISOString();
+        const logger = await import('../config/logger.js').then(m => m.logger);
 
         try {
             const result = await db.run("UPDATE nodes SET status = ?, response_time = ?, last_status_update = ? WHERE id = ?", [
@@ -294,7 +312,7 @@ export class Node {
 
             return result.changes !== undefined && result.changes > 0;
         } catch (error) {
-            console.error("更新节点状态失败:", error);
+            logger.error("更新节点状态失败:", error);
             return false;
         }
     }
@@ -317,6 +335,12 @@ export class Node {
         if (params.protocol) {
             conditions.push("protocol = ?");
             values.push(params.protocol);
+        }
+        
+        // 添加region过滤
+        if (params.region && params.region.trim() !== "") {
+            conditions.push("(region = ? OR region IS NULL)");
+            values.push(params.region.trim());
         }
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
