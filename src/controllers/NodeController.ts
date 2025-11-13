@@ -274,19 +274,22 @@ export class NodeController {
             return errorResponse(res, 400, validationError);
         }
 
-        const { status, response_time } = req.body;
+        let { status, response_time } = req.body;
 
         if (!["Online", "Offline"].includes(status)) {
             return errorResponse(res, 400, "无效的状态值，支持的值: Online, Offline");
         }
 
-        if (response_time !== undefined && !validateNumber(response_time, 0)) {
-            return errorResponse(res, 400, "响应时间必须为非负数");
+        // 确保 response_time 是数字类型
+        response_time = Number(response_time);
+        if (!validateNumber(response_time, 0)) {
+            response_time = 0;
         }
 
         // 记录节点状态，将response_time转换为metadata字符串
         const metadata = response_time !== undefined ? JSON.stringify({ response_time }) : undefined;
-        await Node.updateStatus(nodeId, status as NodeStatus, metadata);
+        console.log('Debug info:', response_time, typeof response_time);
+        await Node.updateStatus(nodeId, status as NodeStatus, metadata, response_time);
 
         logger.info("Node status updated", { nodeId, status });
         successResponse(res, null, "节点状态更新成功");
