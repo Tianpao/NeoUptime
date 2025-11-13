@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS "nodes" (
 CREATE TABLE IF NOT EXISTS "admins" (
     "id" INTEGER NOT NULL,
     "username" TEXT NOT NULL,
-    "qq_number" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "qq_number" TEXT,
+    "email" TEXT,
     "password" TEXT NOT NULL,
     "created_at" TEXT NOT NULL,
     "updated_at" TEXT NOT NULL,

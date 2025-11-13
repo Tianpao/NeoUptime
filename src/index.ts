@@ -1,11 +1,12 @@
 import express from "express";
 import morgan from "morgan";
 import chalk from "chalk";
+import cors from "cors";
 import { router } from "./routes/index.js";
 import { logger, httpLogger } from "./config/logger.js";
 import { initDatabase } from "./config/database.js";
 import { config, validateConfig } from "./config/config.js";
-import { errorResponse } from "./utils/helpers.js";
+import { successResponse, errorResponse } from "./utils/helpers.js";
 import { Admin } from "./models/Admin.js";
 import { geoIPService } from "./utils/GeoIPService.js";
 
@@ -25,16 +26,15 @@ app.use(httpLogger);
 app.use(morgan("dev"));
 
 // 添加 CORS 支持
-app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
-    next();
-});
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"]
+}));
 
 // 健康检查端点
 app.get("/health", (req, res) => {
-    res.json({
+    successResponse(res, {
         status: "healthy",
         timestamp: new Date().toISOString(),
         version: process.env.npm_package_version || "1.0.0",

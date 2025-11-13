@@ -79,7 +79,6 @@ export class AdminController {
             id: admin.id,
             username,
         });
-
         logger.info("Admin logged in successfully", { adminId: admin.id, username, ip: req.ip });
         successResponse(res, { token }, "登录成功");
     });

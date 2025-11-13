@@ -30,21 +30,30 @@ export interface ApiAccessLog {
 export class ApiKey {
     // 生成新的 API Key
     private static generateKey(): string {
-        // 生成一个 32 字节的随机字符串并转换为 base64 格式
+        // 生成一个 32 字节的随机字符串并转换为十六进制格式
         const randomBytes = crypto.randomBytes(32);
-        // 将生成的随机字节转换为十六进制字符串
         return randomBytes.toString("hex");
     }
 
     // 创建新的 API Key
     static async create(keyData: { description?: string; rate_limit?: number }): Promise<ApiKeyData | null> {
         return transaction(async (tx) => {
-            const key = this.generateKey();
-            const now = new Date().toISOString();
+            let key: string;
+            let existing: any;
+            const maxAttempts = 10;
+            let attempts = 0;
 
-            // 检查生成的密钥是否已存在（极低概率，但为了安全考虑）
-            const existing = await tx.get("SELECT id FROM api_keys WHERE key = ?", [key]);
+            // 重试生成唯一密钥（极低概率重复，但为了安全考虑）
+            do {
+                key = this.generateKey();
+                existing = await tx.get("SELECT id FROM api_keys WHERE key = ?", [key]);
+                attempts++;
+            } while (existing && attempts < maxAttempts);
+
+            // 如果达到最大重试次数仍未生成唯一密钥，返回null
             if (existing) return null;
+
+            const now = new Date().toISOString();
 
             const result = await tx.run(
                 `INSERT INTO api_keys (key, description, is_active, rate_limit, created_at, updated_at)
@@ -195,7 +204,7 @@ export class ApiKey {
 
         // 查询 API Key 列表
         const keys = await db.all<ApiKeyData[]>(
-            `SELECT id, key, description, is_active, rate_limit, created_at, updated_at, last_used 
+            `SELECT id, key, description, is_active, rate_limit, created_at, updated_at, last_used_at 
        FROM api_keys 
        ${whereClause} 
        ORDER BY created_at DESC 

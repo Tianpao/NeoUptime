@@ -9,7 +9,7 @@ export interface PaginationParams {
 
 // 响应格式接口
 export interface ApiResponse<T = any> {
-    success: boolean;
+    code: number;
     data?: T;
     message?: string;
     error?: string;
@@ -62,7 +62,7 @@ export const successResponse = <T = any>(
     meta?: object
 ): Response => {
     const response: ApiResponse<T> = {
-        success: true,
+        code: 200,
         data,
         message,
     };
@@ -72,7 +72,7 @@ export const successResponse = <T = any>(
     }
 
     return res.status(200).json(response);
-};
+}
 
 // 分页成功响应
 export const paginatedResponse = <T = any>(
@@ -94,11 +94,11 @@ export const errorResponse = (
     error?: string
 ): Response<ApiResponse> => {
     return res.status(statusCode).json({
-        success: false,
+        code: statusCode,
         message,
         error,
     });
-};
+}
 
 // 验证请求体的辅助函数
 export const validateRequestBody = (req: Request, requiredFields: string[]): string | null => {
