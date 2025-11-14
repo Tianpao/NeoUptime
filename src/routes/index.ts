@@ -47,20 +47,18 @@ adminOnlyRoutes.delete("/nodes/:id", NodeController.delete);
 adminOnlyRoutes.get("/nodes/:id/status", NodeController.getStatus);
 adminOnlyRoutes.put("/nodes/:id/status", NodeController.updateStatus);
 
-// 公共 API 路由（需要 API Key）
-const publicRoutes = Router();
+// 公共 API 路由
+
+// 强制 API Key 验证的公共路由
+const apiKeyRoutes = Router();
+apiKeyRoutes.use(apiKeyAuth);
 
 // 可选 API Key 路由 - 提供默认限制
-publicRoutes.get("/peers", optionalApiKeyAuth, NodeController.getPeers);
-
-// 强制 API Key 验证的其他公共路由
-publicRoutes.use(apiKeyAuth);
-
-// 其他需要 API Key 的公共路由可以在这里添加
+router.get("/peers", optionalApiKeyAuth, NodeController.getPeers);
 
 // 注册所有路由
 router.use(adminRoutes);
 router.use(adminOnlyRoutes);
-router.use(publicRoutes);
+router.use(apiKeyRoutes);
 
 export { router };

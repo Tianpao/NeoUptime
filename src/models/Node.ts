@@ -356,7 +356,7 @@ export class Node {
         // 查询节点列表并进行负载均衡
         const query = `
         SELECT
-            id, name, host, port, protocol, network_name, status, response_time
+            id, name, host, port, protocol, network_name, status, response_time, region, ISP
         FROM nodes
         ${whereClause}
         ORDER BY

@@ -4,6 +4,10 @@
 
 EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供节点管理、管理员认证、API Key 管理等功能。
 
+## API 前缀说明
+
+所有 API 接口均需添加 `/api` 前缀，例如文档中提到的 `GET /peers` 实际访问路径应为 `GET /api/peers`。
+
 ## 认证方式
 
 系统支持两种认证方式：
