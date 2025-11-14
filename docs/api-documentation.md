@@ -517,7 +517,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
         "mail": "node@example.com",
         "region": "China",
         "isp": "China Telecom",
-        "status": "offline",
+        "status": "Offline",
         "created_at": "2024-01-01T00:00:00Z"
     }
 }
@@ -554,7 +554,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
                 "protocol": "http",
                 "region": "China",
                 "isp": "China Telecom",
-                "status": "online",
+                "status": "Online",
                 "created_at": "2024-01-01T00:00:00Z"
             }
         ],
@@ -597,7 +597,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
         "mail": "node@example.com",
         "region": "China",
         "isp": "China Telecom",
-        "status": "online",
+        "status": "Online",
         "created_at": "2024-01-01T00:00:00Z"
     }
 }
@@ -646,7 +646,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
         "mail": "node@example.com",
         "region": "China",
         "isp": "China Telecom",
-        "status": "online",
+        "status": "Online",
         "created_at": "2024-01-01T00:00:00Z"
     }
 }
@@ -689,7 +689,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
     "code": 200,
     "message": "节点状态获取成功",
     "data": {
-        "status": "online",
+        "status": "Online",
         "last_check": "2024-01-01T01:00:00Z",
         "response_time": 50
     }
@@ -710,7 +710,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 
 ```json
 {
-    "status": "online",
+    "status": "Online",
     "response_time": 50
 }
 ```
@@ -747,33 +747,33 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 ```json
 {
     "code": 200,
-    "message": "节点列表获取成功",
-    "data": [
-        {
-            "id": 1,
-            "name": "节点1",
-            "host": "192.168.1.100",
-            "port": 25565,
-            "protocol": "http",
-            "status": "online",
-            "response_time": 50,
-            "allow_relay": true,
-            "region": "China",
-            "isp": "China Telecom"
-        },
-        {
-            "id": 2,
-            "name": "节点2",
-            "host": "192.168.1.101",
-            "port": 25565,
-            "protocol": "https",
-            "status": "online",
-            "response_time": 75,
-            "allow_relay": true,
-            "region": "China",
-            "isp": "China Unicom"
-        }
-    ]
+    "message": "Peer 节点列表获取成功",
+    "data": {
+        "peers": [
+            {
+                "id": 1,
+                "name": "节点1",
+                "host": "192.168.1.100",
+                "port": 25565,
+                "protocol": "http",
+                "network_name": "main",
+                "status": "Online",
+                "response_time": 50
+            },
+            {
+                "id": 2,
+                "name": "节点2",
+                "host": "192.168.1.101",
+                "port": 25565,
+                "protocol": "https",
+                "network_name": "test",
+                "status": "Online",
+                "response_time": 75
+            }
+        ],
+        "total_available": 100,
+        "next_batch_available": true
+    }
 }
 ```
 
