@@ -1,4 +1,5 @@
 import { getDb, transaction } from "../config/database.js";
+import crypto from "crypto";
 
 // 节点状态类型
 export type NodeStatus = "Online" | "Offline";
@@ -48,6 +49,7 @@ export interface PeerNodeInfo {
 
 // Node 模型类
 export class Node {
+
     // 创建新节点
     static async create(nodeData: NodeData): Promise<NodeData> {
         // 检查name属性是否存在（额外安全检查）
@@ -55,39 +57,41 @@ export class Node {
             throw new Error("Missing required field: name");
         }
         
-        const db = getDb();
         const now = new Date().toISOString();
 
-        const result = await db.run(
-            `INSERT INTO nodes 
-       (name, description, host, port, protocol, allow_relay, network_name, 
-        network_secret, max_connections, region, ISP, qq_number, mail, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                nodeData.name,
-                nodeData.description || null,
-                nodeData.host,
-                nodeData.port,
-                nodeData.protocol,
-                nodeData.allow_relay ? 1 : 0,
-                nodeData.network_name || null,
-                nodeData.network_secret || null,
-                nodeData.max_connections,
-                nodeData.region || null,
-                nodeData.ISP || null,
-                nodeData.qq_number || null,
-                nodeData.mail || null,
-                now,
-                now,
-            ]
-        );
+        return transaction(async (tx) => {
 
-        return {
-            ...nodeData,
-            id: result.lastID,
-            created_at: now,
-            updated_at: now,
-        };
+
+            const result = await tx.run(
+                `INSERT INTO nodes 
+       (name, description, host, port, protocol, allow_relay, network_name, 
+        network_secret, max_connections, region, ISP, qq_number, mail, token, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    nodeData.name,
+                    nodeData.description || null,
+                    nodeData.host,
+                    nodeData.port,
+                    nodeData.protocol,
+                    nodeData.allow_relay ? 1 : 0,
+                    nodeData.network_name || null,
+                    nodeData.network_secret || null,
+                    nodeData.max_connections,
+                    nodeData.region || null,
+                    nodeData.ISP || null,
+                    nodeData.qq_number || null,
+                    nodeData.mail || null,
+                    now,
+                    now,
+                ]
+            );
+
+            const createdNode = await tx.get<NodeData>("SELECT * FROM nodes WHERE id = ?", [result.lastID]);
+            if (createdNode && createdNode.allow_relay !== undefined) {
+                createdNode.allow_relay = Boolean(createdNode.allow_relay);
+            }
+            return createdNode as NodeData;
+        });
     }
 
     // 根据ID获取节点
@@ -376,4 +380,6 @@ export class Node {
             next_batch_available: nextBatchAvailable,
         };
     }
+
+
 }
