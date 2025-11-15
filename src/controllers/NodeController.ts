@@ -295,6 +295,51 @@ export class NodeController {
         successResponse(res, null, "节点状态更新成功");
     });
 
+
+
+    // 更新节点状态（通过API KEY认证）
+    static updateStatusByApiKey = asyncHandler(async (req: Request, res: Response): Promise<Response | void> => {
+        // 从请求参数获取节点ID
+        const nodeId = req.body.node_id || req.query.node_id;
+        if (!nodeId) {
+            return errorResponse(res, 400, "节点ID缺失");
+        }
+        const id = parseInt(nodeId);
+        if (isNaN(id) || id <= 0) {
+            return errorResponse(res, 400, "无效的节点ID");
+        }
+
+        // 验证节点是否存在
+        const node = await Node.getById(id);
+        if (!node) {
+            return errorResponse(res, 404, "节点不存在");
+        }
+
+        // 验证状态数据
+        const validationError = validateRequestBody(req, ["status"]);
+        if (validationError) {
+            return errorResponse(res, 400, validationError);
+        }
+
+        let { status, response_time, metadata } = req.body;
+
+        if (!["Online", "Offline"].includes(status)) {
+            return errorResponse(res, 400, "无效的状态值，支持的值: Online, Offline");
+        }
+
+        // 确保 response_time 是数字类型
+        response_time = Number(response_time);
+        if (!validateNumber(response_time, 0)) {
+            response_time = 0;
+        }
+
+        // 记录节点状态
+        await Node.updateStatus(id, status as NodeStatus, metadata, response_time);
+
+        logger.info("Node status updated by API Key", { nodeId: id, status });
+        successResponse(res, null, "节点状态更新成功");
+    });
+
     // 获取 Peer 节点列表（用于 Peer 发现）
     static getPeers = asyncHandler(async (req: Request, res: Response): Promise<Response | void> => {
         // 获取查询参数

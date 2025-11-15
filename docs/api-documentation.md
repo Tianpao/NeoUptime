@@ -13,7 +13,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 系统支持两种认证方式：
 
 1. **JWT 认证**：管理员登录后获得 token，用于访问需要管理员权限的接口
-2. **API Key 认证**：通过 HTTP Header 中的 `Authorization: Bearer {apiKey}` 访问公共 API
+2. **API Key 认证**：通过请求头 `X-API-Key: {apiKey}` 或查询参数 `api_key={apiKey}` 访问公共 API
 
 ## API 接口文档
 
@@ -29,7 +29,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 {
     "username": "admin",
     "password": "password123",
-    "email": "admin@example.com",
+    "email": "admin@example.com"
 }
 ```
 
@@ -47,7 +47,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
     "message": "管理员注册成功",
     "data": {
         "id": 1,
-        "username": "admin",
+        "username": "admin"
     }
 }
 ```
@@ -86,7 +86,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
     "code": 200,
     "message": "登录成功",
     "data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     }
 }
 ```
@@ -115,7 +115,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
     "data": {
         "id": 1,
         "username": "admin",
-        "email": "admin@example.com",
+        "email": "admin@example.com"
     }
 }
 ```
@@ -131,7 +131,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 ```json
 {
     "username": "newadmin",
-    "email": "newadmin@example.com",
+    "email": "newadmin@example.com"
 }
 ```
 
@@ -149,7 +149,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
     "data": {
         "id": 1,
         "username": "newadmin",
-        "email": "newadmin@example.com",
+        "email": "newadmin@example.com"
     }
 }
 ```
@@ -211,12 +211,12 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
         {
             "id": 1,
             "username": "admin",
-            "email": "admin@example.com",
+            "email": "admin@example.com"
         },
         {
             "id": 2,
             "username": "viewer",
-            "email": "viewer@example.com",
+            "email": "viewer@example.com"
         }
     ]
 }
@@ -519,6 +519,7 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
         "max_connections": 100,
         "qq_number": "123456789",
         "mail": "node@example.com",
+        "token": "e643a6c666bd657e7be68f6a6a18cede8423a197a17c6604767f2925cd8acbe4",
         "region": "China",
         "isp": "China Telecom",
         "status": "Offline",
@@ -721,8 +722,8 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 
 **参数说明**：
 
--   `status`（必填）：节点状态
--   `response_time`（必填）：响应时间（毫秒）
+-   `status`（必填）：节点状态，支持 Online/Offline
+-   `response_time`（可选）：响应时间（毫秒）
 
 **成功响应**：
 
@@ -734,13 +735,63 @@ EasyTier NeoUptime 是一个服务器节点管理系统的后端服务，提供�
 }
 ```
 
+#### 4.8 节点自主更新状态（节点使用）
+
+**接口路径**：`PUT /nodes/status`
+
+**认证方式**：API Key 认证（通过请求头 `X-API-Key` 或查询参数 `api_key`）
+
+**请求体**：
+
+```json
+{
+    "node_id": 1,
+    "status": "Online",
+    "response_time": 123,
+    "metadata": {"cpu_usage": "25%", "memory_usage": "40%"}
+}
+```
+
+**参数说明**：
+
+-   `node_id`（必填）：节点 ID
+-   `status`（必填）：节点状态，支持 Online/Offline
+-   `response_time`（可选）：响应时间（毫秒）
+-   `metadata`（可选）：节点元数据，JSON格式，用于存储额外信息
+
+**成功响应**：
+
+```json
+{
+    "code": 200,
+    "message": "节点状态更新成功",
+    "data": null
+}
+```
+
+**失败响应**：
+
+```json
+{
+    "code": 401,
+    "message": "API Key 缺失"
+}
+```
+
+```json
+{
+    "code": 401,
+    "message": "无效的 API Key"
+}
+```
+
 ### 5. 公共 API
 
 #### 5.1 获取节点列表（用于节点发现）
 
 **接口路径**：`GET /peers`
 
-**认证方式**：可选 API Key（通过请求头 `Authorization: Bearer {apiKey}`）
+**认证方式**：可选 API Key（通过请求头 `X-API-Key: {apiKey}` 或查询参数 `api_key={apiKey}`）
 
 **查询参数**：
 

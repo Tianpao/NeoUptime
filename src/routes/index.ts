@@ -56,6 +56,9 @@ apiKeyRoutes.use(apiKeyAuth);
 // 可选 API Key 路由 - 提供默认限制
 router.get("/peers", optionalApiKeyAuth, NodeController.getPeers);
 
+// 节点状态更新路由（通过API KEY认证）
+apiKeyRoutes.put("/nodes/status", NodeController.updateStatusByApiKey);
+
 // 注册所有路由
 router.use(adminRoutes);
 router.use(adminOnlyRoutes);

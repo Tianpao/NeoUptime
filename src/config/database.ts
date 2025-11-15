@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "nodes" (
     "ISP" TEXT,
     "qq_number" TEXT,
     "mail" TEXT,
+
     "created_at" TEXT NOT NULL,
     "status" TEXT DEFAULT 'Offline',
     "last_status_update" TEXT,
